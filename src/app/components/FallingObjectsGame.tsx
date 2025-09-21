@@ -98,8 +98,14 @@ const FallingObjectsGame: React.FC = () => {
             obj => obj !== 떨어지는물체
           );
 
-          // 게임 오버 처리
+          // 게임 오버 처리 - 즉시 모든 떨어지는 물체 제거
           set게임상태(prev => ({ ...prev, 게임오버: true }));
+          
+          // 게임오버 시 모든 떨어지는 물체 즉시 제거
+          fallingObjectsRef.current.forEach(body => {
+            Matter.World.remove(world, body);
+          });
+          fallingObjectsRef.current = [];
         }
       });
     });
@@ -107,7 +113,7 @@ const FallingObjectsGame: React.FC = () => {
 
   // 랜덤한 위치에서 떨어지는 물체 생성 함수
   const 떨어지는물체생성 = () => {
-    if (!worldRef.current) return;
+    if (!worldRef.current || 게임상태.게임오버) return;
 
     // 한번에 생성할 물체 개수 (1~3개 랜덤)
     const 생성할물체개수 = Math.floor(Math.random() * 3) + 1; // 1~3개
@@ -236,6 +242,11 @@ const FallingObjectsGame: React.FC = () => {
     if (!게임상태.게임시작 || 게임상태.게임오버) return;
 
     const 물체생성간격 = setInterval(() => {
+      // 게임오버 상태를 다시 한번 체크하여 안전하게 처리
+      if (게임상태.게임오버) {
+        clearInterval(물체생성간격);
+        return;
+      }
       떨어지는물체생성();
     }, 2000); // 2초마다 물체 생성 (더 여유롭게)
 
